@@ -1,0 +1,724 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Envelope Price Calculator</title>
+
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #172033;
+    --muted: #64748b;
+    --line: #dbe3ee;
+    --accent: #2457d6;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --field-bg: #ffffff;
+    --field-border: #cbd5e1;
+    --option-bg: #ffffff;
+    --selected-bg: #f3f6ff;
+    --result-bg: #f3f6fb;
+    --theme-btn-bg: #172033;
+    --theme-btn-text: #ffffff;
+    --focus-ring: #2457d61a;
+  }
+
+  body.dark-mode {
+    color-scheme: dark;
+    --ink: #e5e7eb;
+    --muted: #a1acc0;
+    --line: #374151;
+    --accent: #648bff;
+    --bg: #0b1120;
+    --card: #151e30;
+    --field-bg: #101827;
+    --field-border: #45516a;
+    --option-bg: #101827;
+    --selected-bg: #202e4c;
+    --result-bg: #101827;
+    --theme-btn-bg: #f3f4f6;
+    --theme-btn-text: #172033;
+    --focus-ring: #648bff30;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", Arial, sans-serif;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  .app {
+    width: min(100%, 510px);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 18px 50px rgba(24, 39, 75, .10);
+    transition: background .25s ease, border-color .25s ease;
+  }
+
+  .brand {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    display: block;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    letter-spacing: -.5px;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* Dark mode button */
+  .theme-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 22px;
+  }
+
+  .theme-toggle {
+    width: auto;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--theme-btn-bg);
+    color: var(--theme-btn-text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  .theme-toggle:hover {
+    opacity: .85;
+  }
+
+  label, legend {
+    display: block;
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 9px;
+  }
+
+  input[type=number], select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid var(--field-border);
+    border-radius: 11px;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--field-bg);
+    outline: none;
+  }
+
+  input::placeholder {
+    color: var(--muted);
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+
+  .field {
+    margin-bottom: 21px;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    margin: 0;
+    background: var(--option-bg);
+    color: var(--ink);
+  }
+
+  .option:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--selected-bg);
+  }
+
+  input[type=radio], input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .guarantee {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 14px;
+    cursor: pointer;
+    margin-bottom: 22px;
+    background: var(--option-bg);
+  }
+
+  .guarantee span {
+    display: block;
+    font-weight: 650;
+  }
+
+  .guarantee small {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+  }
+
+  button.calculate {
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    border-radius: 11px;
+    color: white;
+    background: var(--accent);
+    font: inherit;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button.calculate:hover {
+    filter: brightness(.9);
+  }
+
+  .result {
+    display: none;
+    margin-top: 20px;
+    padding: 19px;
+    background: var(--result-bg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+
+  .result.show {
+    display: block;
+  }
+
+  .result-label {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+
+  /* Total price and copy button */
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .total {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .copy-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: auto;
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--option-bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background .2s ease;
+  }
+
+  .copy-button:hover {
+    background: var(--selected-bg);
+  }
+
+  .copy-button svg {
+    flex-shrink: 0;
+  }
+
+  .copy-feedback {
+    display: none;
+    margin: -7px 0 14px;
+    font-size: 12px;
+    color: #16a34a;
+    font-weight: 600;
+  }
+
+  .copy-feedback.show {
+    display: block;
+  }
+
+  .details {
+    display: grid;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .detail {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .detail span:first-child {
+    color: var(--muted);
+  }
+
+  /* Guaranteed delivery status */
+  .status-yes {
+    color: #16a34a;
+  }
+
+  .status-no {
+    color: #dc2626;
+  }
+
+  .error {
+    display: none;
+    color: #b42318;
+    background: #fff1f0;
+    border-radius: 9px;
+    padding: 11px;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+
+  .error.show {
+    display: block;
+  }
+
+  body.dark-mode .error {
+    color: #fca5a5;
+    background: #3b1b25;
+  }
+
+  .note {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 18px 0 0;
+  }
+
+  @media(max-width: 420px) {
+    .app {
+      padding: 21px;
+    }
+
+    .options {
+      grid-template-columns: 1fr;
+    }
+
+    .brand {
+      gap: 10px;
+    }
+
+    .logo img {
+      width: 75px;
+      height: 75px;
+    }
+
+    h1 {
+      font-size: 21px;
+    }
+
+    .total {
+      font-size: 29px;
+    }
+
+    .price-row {
+      gap: 8px;
+    }
+
+    .copy-button {
+      padding: 9px;
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+  <header class="brand">
+    <div class="logo">
+      <img src="logo.png" alt="Logo">
+    </div>
+
+    <div>
+      <h1>Envelope Calculator</h1>
+      <p class="sub">Quick, simple courier pricing</p>
+      <p class="sub">Made by Mohamed (Frank)</p>
+    </div>
+  </header>
+
+  <!-- Dark mode toggle -->
+  <div class="theme-actions">
+    <button
+      type="button"
+      class="theme-toggle"
+      id="themeToggle"
+      aria-pressed="false"
+    >
+      🌙 Dark Mode
+    </button>
+  </div>
+
+  <form id="calculator">
+
+    <div class="field">
+      <label for="quantity">Number of envelopes</label>
+      <input
+        id="quantity"
+        type="number"
+        min="10"
+        step="1"
+        placeholder="e.g. 60"
+        required
+        autofocus
+      >
+    </div>
+
+    <fieldset
+      class="field"
+      style="border:0;padding:0;margin-left:0;margin-right:0"
+    >
+      <legend>Delivery time range</legend>
+
+      <div class="options">
+        <label class="option">
+          <input type="radio" name="service" value="same" checked>
+          Same Day
+        </label>
+
+        <label class="option">
+          <input type="radio" name="service" value="two">
+          Within 2 Days
+        </label>
+      </div>
+    </fieldset>
+
+    <label class="guarantee">
+      <input id="guaranteed" type="checkbox">
+
+      <div>
+        <span>Guaranteed delivery</span>
+        <small>Applies × 1.5 to the base price</small>
+      </div>
+    </label>
+
+    <button type="submit" class="calculate">
+      Calculate price
+    </button>
+
+    <div class="error" id="error" role="alert"></div>
+
+  </form>
+
+  <section class="result" id="result" aria-live="polite">
+
+    <div class="result-label">Total price</div>
+
+    <div class="price-row">
+      <div class="total" id="total">£0.00</div>
+
+      <button
+        type="button"
+        class="copy-button"
+        id="copyPrice"
+        aria-label="Copy total price"
+        title="Copy total price"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="8" y="8" width="13" height="13" rx="2"/>
+          <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>
+        </svg>
+        <span id="copyText">Copy Price</span>
+      </button>
+    </div>
+
+    <div id="copyFeedback" class="copy-feedback" aria-live="polite"></div>
+
+    <div class="details">
+
+      <div class="detail">
+        <span>Envelope quantity</span>
+        <strong id="outQuantity">—</strong>
+      </div>
+
+      <div class="detail">
+        <span>Price per envelope</span>
+        <strong id="outRate">—</strong>
+      </div>
+
+      <div class="detail">
+        <span>Category</span>
+        <strong id="outCategory">—</strong>
+      </div>
+
+      <div class="detail">
+        <span>Service</span>
+        <strong id="outService">—</strong>
+      </div>
+
+      <div class="detail">
+        <span>Guaranteed</span>
+        <strong id="outGuaranteed" class="status-no">No</strong>
+      </div>
+
+      <div class="detail">
+        <span>Calculation</span>
+        <strong id="outFormula">—</strong>
+      </div>
+
+    </div>
+  </section>
+
+  <p class="note">
+    Pricing : Sameday => [10-50 £1.8] [50-100 £1.5] [100-300 £1.2] [300+ £1.10]  
+-- 2 Days => [10-50 £1.3] [50-100 £1.2] [100-300 £1] [300+ £0.9]  
+-- Guaranteed delivery price is x1.5 
+
+  </p>
+
+</main>
+
+<script>
+const form = document.getElementById('calculator');
+const quantityInput = document.getElementById('quantity');
+const guaranteedInput = document.getElementById('guaranteed');
+const result = document.getElementById('result');
+const error = document.getElementById('error');
+const guaranteedOutput = document.getElementById('outGuaranteed');
+
+const themeToggle = document.getElementById('themeToggle');
+const copyPriceButton = document.getElementById('copyPrice');
+const copyText = document.getElementById('copyText');
+const copyFeedback = document.getElementById('copyFeedback');
+
+/* DARK MODE TOGGLE */
+themeToggle.addEventListener('click', function() {
+  const isDark = document.body.classList.toggle('dark-mode');
+
+  themeToggle.textContent = isDark
+    ? '☀️ Light Mode'
+    : '🌙 Dark Mode';
+
+  themeToggle.setAttribute('aria-pressed', String(isDark));
+});
+
+/* PRICE FORMAT */
+function money(value) {
+  return '£' + value.toLocaleString('en-GB', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+/* GUARANTEED STATUS */
+function updateGuaranteedStatus() {
+  const guaranteed = guaranteedInput.checked;
+
+  guaranteedOutput.textContent = guaranteed
+    ? 'Yes (× 1.5)'
+    : 'No';
+
+  guaranteedOutput.classList.remove('status-yes', 'status-no');
+
+  guaranteedOutput.classList.add(
+    guaranteed ? 'status-yes' : 'status-no'
+  );
+}
+
+/* Update status immediately when checkbox changes */
+guaranteedInput.addEventListener(
+  'change',
+  updateGuaranteedStatus
+);
+
+/* COPY TOTAL PRICE */
+copyPriceButton.addEventListener('click', async function() {
+  const price = document.getElementById('total').textContent.trim();
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(price);
+    } else {
+      // Fallback for browsers without Clipboard API access
+      const textArea = document.createElement('textarea');
+      textArea.value = price;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '0';
+
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const copied = document.execCommand('copy');
+      textArea.remove();
+
+      if (!copied) {
+        throw new Error('Copy failed');
+      }
+    }
+
+    copyText.textContent = 'Copied!';
+    copyFeedback.textContent = price + ' copied to clipboard.';
+    copyFeedback.classList.add('show');
+
+  } catch (copyError) {
+    copyText.textContent = 'Try again';
+    copyFeedback.textContent =
+      'Could not copy automatically. Please copy ' + price + ' manually.';
+    copyFeedback.classList.add('show');
+  }
+
+  // Restore button label after feedback
+  setTimeout(function() {
+    copyText.textContent = 'Copy Price';
+  }, 2000);
+});
+
+/* CALCULATE PRICE */
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  const quantity = Number(quantityInput.value);
+
+  const service = document.querySelector(
+    'input[name="service"]:checked'
+  ).value;
+
+  const guaranteed = guaranteedInput.checked;
+
+  if (!Number.isInteger(quantity) || quantity < 10) {
+    error.textContent =
+      'Please enter a whole number of at least 10 envelopes.';
+
+    error.classList.add('show');
+    result.classList.remove('show');
+    quantityInput.focus();
+    return;
+  }
+
+  let rate;
+  let category;
+
+  if (quantity >= 300) {
+    rate = service === 'same' ? 1.10 : 0.90;
+    category = '300+ envelopes';
+
+  } else if (quantity >= 100) {
+    rate = service === 'same' ? 1.20 : 1.00;
+    category = '100–299 envelopes';
+
+  } else if (quantity >= 50) {
+    rate = service === 'same' ? 1.50 : 1.20;
+    category = '50–99 envelopes';
+
+  } else {
+    rate = service === 'same' ? 1.80 : 1.30;
+    category = '10–49 envelopes';
+  }
+
+  const finalRate = rate * (guaranteed ? 1.5 : 1);
+  const total = quantity * finalRate;
+
+  document.getElementById('total').textContent = money(total);
+
+  document.getElementById('outQuantity').textContent =
+    quantity;
+
+  document.getElementById('outRate').textContent =
+    money(finalRate);
+
+  document.getElementById('outCategory').textContent =
+    category;
+
+  document.getElementById('outService').textContent =
+    service === 'same' ? 'Same Day' : 'Within 2 Days';
+
+  updateGuaranteedStatus();
+
+  document.getElementById('outFormula').textContent =
+    quantity + ' × ' + money(finalRate);
+
+  // Reset copy feedback when a new price is calculated
+  copyText.textContent = 'Copy Price';
+  copyFeedback.classList.remove('show');
+  copyFeedback.textContent = '';
+
+  error.classList.remove('show');
+  result.classList.add('show');
+});
+</script>
+
+</body>
+</html>
